@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci Güncelle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5" style="max-width:720px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">✏️ Öğrenci Güncelle</h1>
+            <a href="index.html" class="btn btn-outline-secondary">← Listeye Dön</a>
+        </div>
+
+        <div id="alertBox"></div>
+
+        <form id="updateForm" class="card p-4 shadow-sm">
+            <div class="mb-3">
+                <label for="studentId" class="form-label">ID</label>
+                <input type="number" class="form-control" id="studentId" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="firstName" class="form-label">Ad</label>
+                <input type="text" class="form-control" id="firstName" required>
+            </div>
+            <div class="mb-3">
+                <label for="lastName" class="form-label">Soyad</label>
+                <input type="text" class="form-control" id="lastName" required>
+            </div>
+            <div class="mb-3">
+                <label for="number" class="form-label">Numara</label>
+                <input type="number" class="form-control" id="number" required>
+            </div>
+            <div class="mb-3">
+                <label for="class" class="form-label">Sınıf (opsiyonel)</label>
+                <input type="text" class="form-control" id="class">
+            </div>
+            <button type="submit" class="btn btn-primary">Güncelle</button>
+        </form>
+    </div>
+
+    <script>
+        const API_BASE = "https://localhost:7104/api/students";
+
+        function getIdFromQuery() {
+            const p = new URLSearchParams(location.search);
+            return p.get("id");
+        }
+
+        const id = getIdFromQuery();
+        const form = document.getElementById("updateForm");
+        const alertBox = document.getElementById("alertBox");
+
+        // İlk yüklemede veriyi doldur
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!id) {
+                alertBox.innerHTML = `<div class="alert alert-warning">Geçersiz ID.</div>`;
+                return;
+            }
+            const res = await fetch(`${API_BASE}/${id}`);
+            if (!res.ok) {
+                alertBox.innerHTML = `<div class="alert alert-danger">Kayıt bulunamadı.</div>`;
+                return;
+            }
+            const s = await res.json();
+            document.getElementById("studentId").value = s.id;
+            document.getElementById("firstName").value = s.firstName;
+            document.getElementById("lastName").value = s.lastName;
+            document.getElementById("number").value = s.number;
+            document.getElementById("class").value = s.class ?? "";
+        });
+
+        // Güncelle
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const payload = {
+                firstName: document.getElementById("firstName").value,
+                lastName: document.getElementById("lastName").value,
+                number: Number(document.getElementById("number").value),
+                class: document.getElementById("class").value
+            };
+
+            const res = await fetch(`${API_BASE}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Öğrenci güncellendi");
+                location.href = "index.html";
+            } else {
+                const text = await res.text();
+                alert("Hata: " + text);
+            }
+        });
+    </script>
+</body>
+</html>
